@@ -16,6 +16,9 @@ g.newElement = function(ele)
 {
    return document.createElement(ele);
 };
+g._addEventListener = function (element, type, listener, useCapture) {
+    element.addEventListener(type, listener, useCapture);
+};
 g.log = g.warn = g.error = g.assert = function () {
 };
 /**
@@ -298,13 +301,131 @@ g._initSys = function()
         window.open(url);
     };
 
-    g.log(g._renderType + "   " + capabilities);
-
 };
+
+g.game = {
+    //debug 模式
+    DEBUG_MODE_NONE: 0,
+    DEBUG_MODE_INFO: 1,
+    DEBUG_MODE_WARN: 2,
+    DEBUG_MODE_ERROR: 3,
+    DEBUG_MODE_INFO_FOR_WEB_PAGE: 4,
+    DEBUG_MODE_WARN_FOR_WEB_PAGE: 5,
+    DEBUG_MODE_ERROR_FOR_WEB_PAGE: 6,
+
+    EVENT_HIDE: "game_on_hide",
+    EVENT_SHOW: "game_on_show",
+    EVENT_RESIZE: "game_on_resize",
+    _eventHide: null,
+    _eventShow: null,
+    _intervalId: null,//interval target of main
+
+    _paused : true, //游戏是否暂停
+
+    _lastTime: null,
+    _frameTime: null,
+
+    setFrameRate: function (frameRate) {
+        var self = this;
+        if (self._intervalId)
+            window.cancelAnimationFrame(self._intervalId);
+        self._paused = true;
+        self._setAnimFrame();
+        self._runMainLoop();
+    },
+    _setAnimFrame: function () {
+        this._lastTime = new Date();
+        this._frameTime = 1000 / g.CONFIG.frameRate;
+        if((g.sys.os === g.sys.OS_IOS && g.sys.browserType === g.sys.BROWSER_TYPE_WECHAT) || g.CONFIG.frameRate !== 60) {
+            window.requestAnimFrame = this._stTime;
+            window.cancelAnimationFrame = this._ctTime;
+        }
+        else {
+            window.requestAnimFrame = window.requestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            window.oRequestAnimationFrame ||
+            window.msRequestAnimationFrame ||
+            this._stTime;
+            window.cancelAnimationFrame = window.cancelAnimationFrame ||
+            window.cancelRequestAnimationFrame ||
+            window.msCancelRequestAnimationFrame ||
+            window.mozCancelRequestAnimationFrame ||
+            window.oCancelRequestAnimationFrame ||
+            window.webkitCancelRequestAnimationFrame ||
+            window.msCancelAnimationFrame ||
+            window.mozCancelAnimationFrame ||
+            window.webkitCancelAnimationFrame ||
+            window.oCancelAnimationFrame ||
+            this._ctTime;
+        }
+    },
+    _stTime: function(callback){
+        var currTime = new Date().getTime();
+        var timeToCall = Math.max(0, g.game._frameTime - (currTime - g.game._lastTime));
+        var id = window.setTimeout(function() { callback(); },
+            timeToCall);
+        g.game._lastTime = currTime + timeToCall;
+        return id;
+    },
+    _ctTime: function(id){
+        window.clearTimeout(id);
+    },
+
+    _runMainLoop : function()
+    {
+        var self = this;
+      //  g.director.setDisplayStats(g.CONFIG.showFPS);
+        var i = 0;
+        var callback = function () {
+            if (!self._paused) {
+                //g.director.mainLoop();
+                console.log(++i);
+                if(self._intervalId)
+                    window.cancelAnimationFrame(self._intervalId);
+                self._intervalId = window.requestAnimFrame(callback);
+            }
+        };
+
+        window.requestAnimFrame(callback);
+        self._paused = false;
+    },
+    /*
+    * 开始游戏
+    * */
+    run : function()
+    {
+        var self = this;
+        var _run = function()
+        {
+            if (g._supportRender) {
+                g._setup();
+                self._runMainLoop();
+               /* self._eventHide = self._eventHide || new g.EventCustom(self.EVENT_HIDE);
+                self._eventHide.setUserData(self);
+                self._eventShow = self._eventShow || new g.EventCustom(self.EVENT_SHOW);
+                self._eventShow.setUserData(self);
+                self.onStart();*/
+            }
+        };
+        document.body ?
+            _run() :
+            g._addEventListener(window, 'load', function () {
+                this.removeEventListener('load', arguments.callee, false);
+                _run();
+            }, false);
+    },
+
+    _initConfig : function()
+    {
+        g._initSys();
+    }
+};
+g.game._initConfig();
 
 g._setup = function()
 {
-    g._initSys();
+    g.game._setAnimFrame();
 
     var canvas = document.getElementById("gameCanvas");
     var cxt = canvas.getContext("2d");
@@ -313,4 +434,4 @@ g._setup = function()
 
 };
 
-g._setup();
+g.game.run();
