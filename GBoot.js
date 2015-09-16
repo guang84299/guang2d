@@ -4,25 +4,52 @@
 
 var g = g || {};
 
+g.CONFIG = {
+    "debugMode" : 1,
+    "showFPS" : true,
+    "frameRate" : 60,
+    "id" : "gameCanvas",
+    "renderMode" : 0
+};
+
+g.newElement = function(ele)
+{
+   return document.createElement(ele);
+};
+g.log = g.warn = g.error = g.assert = function () {
+};
+/**
+ * create a webgl context
+ * @param {HTMLCanvasElement} canvas
+ * @param {Object} opt_attribs
+ * @return {WebGLRenderingContext}
+ */
+g.create3DContext = function (canvas, opt_attribs) {
+    var names = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
+    var context = null;
+    for (var ii = 0; ii < names.length; ++ii) {
+        try {
+            context = canvas.getContext(names[ii], opt_attribs);
+        } catch (e) {
+        }
+        if (context) {
+            break;
+        }
+    }
+    return context;
+};
+
 g._initSys = function()
 {
-    /**
-     * Canvas of render type
-     */
+    //Canvas of render type
     g._RENDER_TYPE_CANVAS = 0;
     g._RENDER_TYPE_WEBGL = 1;
 
-    /**
-     * System variables
-     * @namespace
-     * @name cc.sys
-     */
+    //System variables
     g.sys = {};
     var sys = g.sys;
 
-    /**
-     *  language
-     */
+    //language
     sys.LANGUAGE_ENGLISH = "en";
     sys.LANGUAGE_CHINESE = "zh";
 
@@ -171,7 +198,107 @@ g._initSys = function()
         height: ratio * h
     };
 
-    console.log(sys.browserType + "   " + sys.windowPixelResolution.width);
+    //判断是否支持webgl  g._renderType g._supportRender
+    (function(){
+        var userRenderMode = g.CONFIG.renderMode - 0;
+        if(isNaN(userRenderMode) || userRenderMode > 2 || userRenderMode < 0)
+            userRenderMode = 0;
+        var tmpCanvas = g.newElement("canvas");
+        g._renderType = g._RENDER_TYPE_CANVAS;
+        g._supportRender = false;
+
+        var supportWebGL = win.WebGLRenderingContext;
+
+        if(userRenderMode === 2 || (userRenderMode === 0 && supportWebGL))
+            try{
+                var context = g.create3DContext(tmpCanvas, {'stencil': true, 'preserveDrawingBuffer': true });
+                if(context){
+                    g._renderType = g._RENDER_TYPE_WEBGL;
+                    g._supportRender = true;
+                }
+            }catch(e){}
+
+        if(userRenderMode === 1 || (userRenderMode === 0 && g._supportRender === false))
+            try {
+                tmpCanvas.getContext("2d");
+                g._renderType = g._RENDER_TYPE_CANVAS;
+                g._supportRender = true;
+            } catch (e) {}
+    })();
+
+    sys._canUseCanvasNewBlendModes = function(){
+        var canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        var context = canvas.getContext('2d');
+        context.fillStyle = '#000';
+        context.fillRect(0,0,1,1);
+        context.globalCompositeOperation = 'multiply';
+
+        var canvas2 = document.createElement('canvas');
+        canvas2.width = 1;
+        canvas2.height = 1;
+        var context2 = canvas2.getContext('2d');
+        context2.fillStyle = '#fff';
+        context2.fillRect(0,0,1,1);
+
+        context.drawImage(canvas2, 0, 0, 1, 1);
+
+        return context.getImageData(0,0,1,1).data[0] === 0;
+    };
+
+    //Whether or not the Canvas BlendModes are supported.
+    sys._supportCanvasNewBlendModes = sys._canUseCanvasNewBlendModes();
+
+    //本地存储
+    try {
+        var localStorage = sys.localStorage = win.localStorage;
+        localStorage.setItem("storage", "");
+        localStorage.removeItem("storage");
+        localStorage = null;
+    } catch (e) {
+        var warn = function () {
+            g.warn("Warning: localStorage isn't enabled. Please confirm browser cookie or privacy option");
+        };
+        sys.localStorage = {
+            getItem : warn,
+            setItem : warn,
+            removeItem : warn,
+            clear : warn
+        };
+    }
+
+    var capabilities = sys.capabilities = {"canvas": true};
+    if (g._renderType === g._RENDER_TYPE_WEBGL)
+        capabilities["opengl"] = true;
+    if (docEle['ontouchstart'] !== undefined || doc['ontouchstart'] !== undefined || nav.msPointerEnabled)
+        capabilities["touches"] = true;
+    if (docEle['onmouseup'] !== undefined)
+        capabilities["mouse"] = true;
+    if (docEle['onkeyup'] !== undefined)
+        capabilities["keyboard"] = true;
+    if (win.DeviceMotionEvent || win.DeviceOrientationEvent)
+        capabilities["accelerometer"] = true;
+
+    //Dump system informations
+    sys.dump = function () {
+        var self = this;
+        var str = "";
+        str += "isMobile : " + self.isMobile + "\r\n";
+        str += "language : " + self.language + "\r\n";
+        str += "browserType : " + self.browserType + "\r\n";
+        str += "capabilities : " + JSON.stringify(self.capabilities) + "\r\n";
+        str += "os : " + self.os + "\r\n";
+        str += "platform : " + self.platform + "\r\n";
+        g.log(str);
+    };
+
+    //Open a url in browser
+    sys.openURL = function(url){
+        window.open(url);
+    };
+
+    g.log(g._renderType + "   " + capabilities);
 
 };
 
