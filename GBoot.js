@@ -303,6 +303,10 @@ g._initSys = function()
 
 };
 
+g.load = {
+
+};
+
 g.game = {
     //debug 模式
     DEBUG_MODE_NONE: 0,
