@@ -21,6 +21,23 @@ g._addEventListener = function (element, type, listener, useCapture) {
 };
 g.log = g.warn = g.error = g.assert = function () {
 };
+//遍历对象或数组
+g.each = function (obj, iterator, context) {
+    if (!obj)
+        return;
+    if (obj instanceof Array) {
+        for (var i = 0, li = obj.length; i < li; i++) {
+            if (iterator.call(context, obj[i], i) === false)
+                return;
+        }
+    } else {
+        for (var key in obj) {
+            if (iterator.call(context, obj[key], key) === false)
+                return;
+        }
+    }
+};
+
 /**
  * create a webgl context
  * @param {HTMLCanvasElement} canvas
@@ -303,8 +320,135 @@ g._initSys = function()
 
 };
 
-g.load = {
+g.path = {
+    join : function()
+    {
+        var l = arguments.length;
+        var result = "";
+        for (var i = 0; i < l; i++) {
+            result = (result + (result === "" ? "" : "/") + arguments[i]).replace(/(\/|\\\\)$/, "");
+        }
+        return result;
+    }
+};
 
+/**
+ * 异步加载辅助
+ * @param {Object|Array} srcObj
+ * @param {Number} limit the limit of parallel number
+ * @param {function} iterator
+ * @param {function} onEnd
+ * @param {object} target
+ * @constructor
+ */
+g.AsyncPool = function(srcObj, limit, iterator, onEnd, target)
+{
+    var self = this;
+    self._srcObj = srcObj;
+    self._limit = limit;
+    self._pool = [];
+    self._iterator = iterator;
+    self._iteratorTarget = target;
+    self._onEnd = onEnd;
+    self._onEndTarget = target;
+    self._results = srcObj instanceof Array ? [] : {};
+
+    g.each(srcObj,function(value,index){
+        self._pool.push({index : index, value : value});
+    });
+
+    self._size = self._pool.length;
+    self._finishedsize = 0;
+    self._workingsize = 0;
+
+    self._limit = self._limit || self._size;
+
+    self._handleItem = function()
+    {
+        var self = this;
+        if(self._pool.length === 0 || self._workingsize >= self._limit)
+            return;
+
+        var item = self._pool.shift();
+        var value = item.value,index = item.index;
+
+        self._workingsize++;
+
+        self._iterator.call(self._iteratorTarget,value, index,function(err){
+            self._finishedsize++;
+            self._workingsize--;
+
+            var arr = Array.prototype.slice.call(arguments, 1);
+            self._results[this.index] = arr[0];
+            if (self._finishedsize === self._size) {
+                if (self._onEnd)
+                    self._onEnd.call(self._onEndTarget, null, self._results);
+                return;
+            }
+            self._handleItem();
+        }.bind(item),self);
+    };
+
+    self.flow = function(){
+        var self = this;
+        if(self._pool.length === 0) {
+            if(self._onEnd)
+                self._onEnd.call(self._onEndTarget, null, []);
+            return;
+        }
+        for(var i = 0; i < self._limit; i++)
+            self._handleItem();
+    }
+};
+
+g.async =
+{
+    map : function(tasks, iterator, callback, target){
+        var locIterator = iterator;
+        if(typeof(iterator) === "object"){
+            callback = iterator.cb;
+            target = iterator.iteratorTarget;
+            locIterator = iterator.iterator;
+        }
+        var asyncPool = new g.AsyncPool(tasks, 0, locIterator, callback, target);
+        asyncPool.flow();
+        return asyncPool;
+    }
+};
+
+g.load = {
+    _jsCache : {},
+
+
+    loadJs : function(baseDir,jsList,cb)
+    {
+        var self = this, localJsCache = self._jsCache;
+        g.async.map(jsList,function(item, index, cb1){
+            var jsPath = g.path.join(baseDir, item);
+            if (localJsCache[jsPath]) return cb1(null);
+            self._createScript(jsPath, false, cb1);
+        },cb);
+    },
+
+    _createScript : function(jsPath,isAsync,cb)
+    {
+        var s = g.newElement("script");
+        s.async = isAsync;
+        this._jsCache[jsPath] = true;
+        s.src = jsPath;
+
+        g._addEventListener(s,"load",function(){
+            s.parentNode.removeChild(s);
+            this.removeEventListener('load', arguments.callee, false);
+            cb();
+        },false);
+        g._addEventListener(s,"error",function(){
+            s.parentNode.removeChild(s);
+            cb("Load " + jsPath + " failed!");
+        },false);
+
+        document.body.appendChild(s);
+    }
 };
 
 g.game = {
@@ -438,4 +582,4 @@ g._setup = function()
 
 };
 
-g.game.run();
+//g.game.run();
