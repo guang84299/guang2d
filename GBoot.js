@@ -417,7 +417,8 @@ g.async =
 };
 
 g.load = {
-    _jsCache : {},
+    _jsCache : {},//js 缓存
+    imgCache : {},//图片缓存
 
 
     loadJs : function(baseDir,jsList,cb)
@@ -428,6 +429,57 @@ g.load = {
             if (localJsCache[jsPath]) return cb1(null);
             self._createScript(jsPath, false, cb1);
         },cb);
+    },
+
+    loadText : function(url,cb)
+    {
+        var xhr = this.getXMLHttpRequest(),
+            errInfo = "load " + url + " failed!";
+        xhr.open("GET", url, true);
+        if (/msie/i.test(navigator.userAgent) && !/opera/i.test(navigator.userAgent)) {
+            // IE-specific logic here
+            xhr.setRequestHeader("Accept-Charset", "utf-8");
+            xhr.onreadystatechange = function () {
+                if(xhr.readyState === 4)
+                    xhr.status === 200 ? cb(null, xhr.responseText) : cb(errInfo);
+            };
+        } else {
+            if (xhr.overrideMimeType) xhr.overrideMimeType("text\/plain; charset=utf-8");
+            xhr.onload = function () {
+                if(xhr.readyState === 4)
+                    xhr.status === 200 ? cb(null, xhr.responseText) : cb(errInfo);
+            };
+        }
+        xhr.send(null);
+    },
+
+    loadImg : function(url,cb)
+    {
+        var self = this;
+        var img = self.imgCache[url];
+        if(img)
+        {
+            if(cb) cb("load image success",url);
+            return img;
+        }
+
+        img = new Image();
+        var loadCallback = function () {
+            this.removeEventListener('load', loadCallback, false);
+            this.removeEventListener('error', errorCallback, false);
+
+            if(cb) cb("load image success",url);
+        };
+
+        var errorCallback = function () {
+            this.removeEventListener('error', errorCallback, false);
+            typeof cb === "function" && cb("load image failed",url);
+        };
+
+        g._addEventListener(img, "load", loadCallback);
+        g._addEventListener(img, "error", errorCallback);
+        img.src = url;
+        return img;
     },
 
     _createScript : function(jsPath,isAsync,cb)
@@ -448,7 +500,11 @@ g.load = {
         },false);
 
         document.body.appendChild(s);
-    }
+    },
+
+    getXMLHttpRequest: function () {
+        return window.XMLHttpRequest ? new window.XMLHttpRequest() : new ActiveXObject("MSXML2.XMLHTTP");
+    },
 };
 
 g.game = {
@@ -469,6 +525,7 @@ g.game = {
     _intervalId: null,//interval target of main
 
     _paused : true, //游戏是否暂停
+    _prepared : false, //是否加载完成
 
     _lastTime: null,
     _frameTime: null,
@@ -547,13 +604,18 @@ g.game = {
         var _run = function()
         {
             if (g._supportRender) {
-                g._setup();
-                self._runMainLoop();
-               /* self._eventHide = self._eventHide || new g.EventCustom(self.EVENT_HIDE);
-                self._eventHide.setUserData(self);
-                self._eventShow = self._eventShow || new g.EventCustom(self.EVENT_SHOW);
-                self._eventShow.setUserData(self);
-                self.onStart();*/
+                self._checkPrepare = setInterval(function () {
+                    if (self._prepared) {
+                        g._setup();
+                        self._runMainLoop();
+                       /* self._eventHide = self._eventHide || new cc.EventCustom(self.EVENT_HIDE);
+                        self._eventHide.setUserData(self);
+                        self._eventShow = self._eventShow || new cc.EventCustom(self.EVENT_SHOW);
+                        self._eventShow.setUserData(self);
+                        self.onStart();*/
+                        clearInterval(self._checkPrepare);
+                    }
+                }, 10);
             }
         };
         document.body ?
@@ -583,3 +645,9 @@ g._setup = function()
 };
 
 //g.game.run();
+g.load.loadText("res/mask.fs",function(){
+    if(arguments.length == 1)
+    console.log(arguments[0]);
+    else
+        console.log(arguments[1]);
+});
