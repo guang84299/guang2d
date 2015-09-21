@@ -645,9 +645,9 @@ g._setup = function()
 };
 
 //g.game.run();
-g.load.loadText("res/mask.fs",function(){
-    if(arguments.length == 1)
-    console.log(arguments[0]);
-    else
-        console.log(arguments[1]);
-});
+var list = [
+    "guang2d/GDebugger.js",
+    "guang2d/core/utils/sprintf.js",
+    ];
+//g.load.loadJs("src",list);
+
