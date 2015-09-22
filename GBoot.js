@@ -633,21 +633,54 @@ g.game = {
 };
 g.game._initConfig();
 
+g._canvas = null;
+g.container = null;
+g._renderContext = null;
+g.webglContext = null;
+
 g._setup = function()
 {
     g.game._setAnimFrame();
 
-    var canvas = document.getElementById("gameCanvas");
-    var cxt = canvas.getContext("2d");
-    cxt.fillStyle="#FF0000";
-    cxt.fillRect(0,0,150,75);
+    var canvas = document.getElementById(g.CONFIG.id);
+    var localCanvas = g._canvas = canvas;
+    if (g._renderType === g._RENDER_TYPE_WEBGL)
+        g._renderContext = g.webglContext = g.create3DContext(localCanvas, {
+            'stencil': true,
+            'preserveDrawingBuffer': true,
+            'antialias': !g.sys.isMobile,
+            'alpha': true
+        });
+    if (g._renderContext) {
+        g._renderContext.fillStyle="#FF0000";
+        //g._renderContext.fillRect(0,0,150,75);
+        // g._drawingUtil = new g.DrawingPrimitiveWebGL(g._renderContext);
+        g._rendererInitialized = true;
+       // g.textureCache._initializingRenderer();
+       // g.shaderCache._init();
+    } else {
+       // g._renderContext = new g.CanvasContextWrapper(localCanvas.getContext("2d"));
+       // g._drawingUtil = g.DrawingPrimitiveCanvas ? new g.DrawingPrimitiveCanvas(g._renderContext) : null;
+    }
 
+    if (g.sys.isMobile) {
+        var fontStyle = g.newElement("style");
+        fontStyle.type = "text/css";
+        document.body.appendChild(fontStyle);
+
+        fontStyle.textContent = "body,canvas,div{ -moz-user-select: none;-webkit-user-select: none;-ms-user-select: none;-khtml-user-select: none;"
+        + "-webkit-tap-highlight-color:rgba(0,0,0,0);}";
+    }
 };
 
-//g.game.run();
+g.game.run();
 var list = [
     "guang2d/GDebugger.js",
+    "guang2d/core/GClass.js",
     "guang2d/core/utils/sprintf.js",
     ];
-//g.load.loadJs("src",list);
+g.load.loadJs("src",list,function(){
+    g.game._prepared = true;
+    console.log(g.game._prepared);
+});
 
