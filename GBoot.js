@@ -505,6 +505,11 @@ g.load = {
     getXMLHttpRequest: function () {
         return window.XMLHttpRequest ? new window.XMLHttpRequest() : new ActiveXObject("MSXML2.XMLHTTP");
     },
+
+    getRes : function(url)
+    {
+        return this._jsCache[url];
+    }
 };
 
 g.game = {
@@ -684,6 +689,8 @@ var list = [
     "guang2d/core/DrawingPrimitiveWebGL.js",
     "guang2d/core/GClass.js",
     "guang2d/core/GMacro.js",
+    "guang2d/core/shaders/GGLProgram.js",
+    "guang2d/core/shaders/GShader.js",
     "guang2d/core/shaders/GShaderCache.js",
     "guang2d/core/utils/sprintf.js",
     ];

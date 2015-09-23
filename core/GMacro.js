@@ -312,47 +312,47 @@ g.SHADER_POSITION_LENGTHTEXTURECOLOR = "ShaderPositionLengthTextureColor";
  * @constant
  * @type {String}
  */
-g.UNIFORM_PMATRIX_S = "CC_PMatrix";
+g.UNIFORM_PMATRIX_S = "G_PMatrix";
 /**
  * @constant
  * @type {String}
  */
-g.UNIFORM_MVMATRIX_S = "CC_MVMatrix";
+g.UNIFORM_MVMATRIX_S = "G_MVMatrix";
 /**
  * @constant
  * @type {String}
  */
-g.UNIFORM_MVPMATRIX_S = "CC_MVPMatrix";
+g.UNIFORM_MVPMATRIX_S = "G_MVPMatrix";
 /**
  * @constant
  * @type {String}
  */
-g.UNIFORM_TIME_S = "CC_Time";
+g.UNIFORM_TIME_S = "G_Time";
 /**
  * @constant
  * @type {String}
  */
-g.UNIFORM_SINTIME_S = "CC_SinTime";
+g.UNIFORM_SINTIME_S = "G_SinTime";
 /**
  * @constant
  * @type {String}
  */
-g.UNIFORM_COSTIME_S = "CC_CosTime";
+g.UNIFORM_COSTIME_S = "G_CosTime";
 /**
  * @constant
  * @type {String}
  */
-g.UNIFORM_RANDOM01_S = "CC_Random01";
+g.UNIFORM_RANDOM01_S = "G_Random01";
 /**
  * @constant
  * @type {String}
  */
-g.UNIFORM_SAMPLER_S = "CC_Texture0";
+g.UNIFORM_SAMPLER_S = "G_Texture0";
 /**
  * @constant
  * @type {String}
  */
-g.UNIFORM_ALPHA_TEST_VALUE_S = "CC_alpha_value";
+g.UNIFORM_ALPHA_TEST_VALUE_S = "G_alpha_value";
 
 //------------Attribute names--------------
 /**
@@ -411,3 +411,12 @@ g.SELECTED_TAG = 8802;
  * @type Number
  */
 g.DISABLE_TAG = 8803;
+
+g.checkGLErrorDebug = function () {
+    if (g._renderType === g._RENDER_TYPE_WEBGL) {
+        var _error = g._renderContext.getError();
+        if (_error) {
+            g.log(_error);
+        }
+    }
+};
