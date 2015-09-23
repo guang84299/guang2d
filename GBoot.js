@@ -586,6 +586,10 @@ g.game = {
             if (!self._paused) {
                 //g.director.mainLoop();
                 console.log(++i);
+
+                g._renderContext.clearColor(0.0, 0.0, 0.0, 1.0);
+                g._renderContext.clear(g._renderContext.COLOR_BUFFER_BIT);
+
                 if(self._intervalId)
                     window.cancelAnimationFrame(self._intervalId);
                 self._intervalId = window.requestAnimFrame(callback);
@@ -637,6 +641,7 @@ g._canvas = null;
 g.container = null;
 g._renderContext = null;
 g.webglContext = null;
+g._drawingUtil = null;
 
 g._setup = function()
 {
@@ -652,9 +657,9 @@ g._setup = function()
             'alpha': true
         });
     if (g._renderContext) {
-        g._renderContext.fillStyle="#FF0000";
+        g._renderContext.viewport(0, 0, canvas.width, canvas.height);
         //g._renderContext.fillRect(0,0,150,75);
-        // g._drawingUtil = new g.DrawingPrimitiveWebGL(g._renderContext);
+         g._drawingUtil = new g.DrawingPrimitiveWebGL(g._renderContext);
         g._rendererInitialized = true;
        // g.textureCache._initializingRenderer();
        // g.shaderCache._init();
@@ -676,7 +681,10 @@ g._setup = function()
 g.game.run();
 var list = [
     "guang2d/GDebugger.js",
+    "guang2d/core/DrawingPrimitiveWebGL.js",
     "guang2d/core/GClass.js",
+    "guang2d/core/GMacro.js",
+    "guang2d/core/shaders/GShaderCache.js",
     "guang2d/core/utils/sprintf.js",
     ];
 g.load.loadJs("src",list,function(){

@@ -22,7 +22,7 @@
 
             for(var name in props)
             {
-                if(typeof props[name] === "object")
+                if(typeof props[name] === "object" && props[name] !== null)
                 {
                     prototype[name] = (props[name].constructor === Array) ? [] : {};
                     deepCopy(props[name], prototype[name]);
@@ -45,4 +45,3 @@
     };
 
 })();
-
