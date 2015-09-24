@@ -687,7 +687,7 @@ g._setup = function()
 g.game.run();
 var list = [
     "guang2d/GDebugger.js",
-    "guang2d/core/DrawingPrimitiveWebGL.js",
+    "guang2d/core/GDrawingPrimitiveWebGL.js",
     "guang2d/core/GClass.js",
     "guang2d/core/GConfig.js",
     "guang2d/core/GMacro.js",

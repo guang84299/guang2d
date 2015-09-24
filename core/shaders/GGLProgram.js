@@ -360,6 +360,11 @@ g.GLProgram = g.Class.extend({
         }
     },
 
+    setUniformForModelViewAndProjectionMatrixWithMat4: function () {
+        this._glContext.uniformMatrix4fv(this._uniforms[cc.UNIFORM_MVMATRIX], false, cc.modelview_matrix_stack.top.mat);
+        this._glContext.uniformMatrix4fv(this._uniforms[cc.UNIFORM_PMATRIX], false, cc.projection_matrix_stack.top.mat);
+    },
+
     reset: function () {
         this._vertShader = null;
         this._fragShader = null;
