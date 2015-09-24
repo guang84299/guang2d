@@ -34,3 +34,36 @@ g.glUseProgram = function (program) {
         g._renderContext.useProgram(program);
     }
 };
+
+g.glEnableVertexAttribs = function (flags) {
+    /* Position */
+    var ctx = g._renderContext;
+    var enablePosition = ( flags & g.VERTEX_ATTRIB_FLAG_POSITION );
+    if (enablePosition !== g._vertexAttribPosition) {
+        if (enablePosition)
+            ctx.enableVertexAttribArray(g.VERTEX_ATTRIB_POSITION);
+        else
+            ctx.disableVertexAttribArray(g.VERTEX_ATTRIB_POSITION);
+        g._vertexAttribPosition = enablePosition;
+    }
+
+    /* Color */
+    var enableColor = (flags & g.VERTEX_ATTRIB_FLAG_COLOR);
+    if (enableColor !== g._vertexAttribColor) {
+        if (enableColor)
+            ctx.enableVertexAttribArray(g.VERTEX_ATTRIB_COLOR);
+        else
+            ctx.disableVertexAttribArray(g.VERTEX_ATTRIB_COLOR);
+        g._vertexAttribColor = enableColor;
+    }
+
+    /* Tex Coords */
+    var enableTexCoords = (flags & g.VERTEX_ATTRIB_FLAG_TEX_COORDS);
+    if (enableTexCoords !== g._vertexAttribTexCoords) {
+        if (enableTexCoords)
+            ctx.enableVertexAttribArray(g.VERTEX_ATTRIB_TEX_COORDS);
+        else
+            ctx.disableVertexAttribArray(g.VERTEX_ATTRIB_TEX_COORDS);
+        g._vertexAttribTexCoords = enableTexCoords;
+    }
+};

@@ -28,7 +28,7 @@ g.DrawingPrimitiveWebGL = g.Class.extend({
             //
             // Position and 1 color passed as a uniform (to similate glColor4ub )
             //
-            _t._shader = cc.shaderCache.programForKey(cc.SHADER_POSITION_UCOLOR);
+            _t._shader = g.shaderCache.programForKey(g.SHADER_POSITION_UCOLOR);
             _t._colorLocation = _t._renderContext.getUniformLocation(_t._shader.getProgram(), "u_color");
             _t._pointSizeLocation = _t._renderContext.getUniformLocation(_t._shader.getProgram(), "u_pointSize");
 
@@ -49,18 +49,18 @@ g.DrawingPrimitiveWebGL = g.Class.extend({
         var glContext = this._renderContext;
         this._shader.use();
         this._shader.setUniformForModelViewAndProjectionMatrixWithMat4();
-        cc.glEnableVertexAttribs(cc.VERTEX_ATTRIB_FLAG_POSITION);
+        g.glEnableVertexAttribs(g.VERTEX_ATTRIB_FLAG_POSITION);
         glContext.uniform4fv(this._colorLocation, this._colorArray);
         this._shader.setUniformLocationWith1f(this._pointSizeLocation, this._pointSize);
 
         var pointBuffer = glContext.createBuffer();
         glContext.bindBuffer(glContext.ARRAY_BUFFER, pointBuffer);
         glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array([point.x, point.y]), glContext.STATIC_DRAW);
-        glContext.vertexAttribPointer(cc.VERTEX_ATTRIB_POSITION, 2, glContext.FLOAT, false, 0, 0);
+        glContext.vertexAttribPointer(g.VERTEX_ATTRIB_POSITION, 2, glContext.FLOAT, false, 0, 0);
 
         glContext.drawArrays(glContext.POINTS, 0, 1);
         glContext.deleteBuffer(pointBuffer);
 
-        cc.incrementGLDraws(1);
+        g.incrementGLDraws(1);
     },
 });

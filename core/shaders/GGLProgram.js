@@ -361,8 +361,8 @@ g.GLProgram = g.Class.extend({
     },
 
     setUniformForModelViewAndProjectionMatrixWithMat4: function () {
-        this._glContext.uniformMatrix4fv(this._uniforms[cc.UNIFORM_MVMATRIX], false, cc.modelview_matrix_stack.top.mat);
-        this._glContext.uniformMatrix4fv(this._uniforms[cc.UNIFORM_PMATRIX], false, cc.projection_matrix_stack.top.mat);
+        this._glContext.uniformMatrix4fv(this._uniforms[g.UNIFORM_MVMATRIX], false, g.modelview_matrix_stack.top.mat);
+        this._glContext.uniformMatrix4fv(this._uniforms[g.UNIFORM_PMATRIX], false, g.projection_matrix_stack.top.mat);
     },
 
     reset: function () {

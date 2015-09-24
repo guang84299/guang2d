@@ -51,5 +51,5 @@
         _useSIMD = enable;
     }
 
-    g.defineGetterSetter(g.sys, "useSIMD", _isEnabledSIMD, _enableSIMD);
+   // g.defineGetterSetter(g.sys, "useSIMD", _isEnabledSIMD, _enableSIMD);
 })(g);

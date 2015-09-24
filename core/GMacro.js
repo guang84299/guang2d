@@ -420,3 +420,7 @@ g.checkGLErrorDebug = function () {
         }
     }
 };
+
+g.incrementGLDraws = function (addNumber) {
+    g.g_NumberOfDraws += addNumber;
+};

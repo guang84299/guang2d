@@ -590,11 +590,9 @@ g.game = {
         var callback = function () {
             if (!self._paused) {
                 //g.director.mainLoop();
-                console.log(++i);
+               // console.log(++i);
 
-                g._renderContext.clearColor(0.0, 0.0, 0.0, 1.0);
-                g._renderContext.clear(g._renderContext.COLOR_BUFFER_BIT);
-
+                g._drawingUtil.drawPoint(100);
                 if(self._intervalId)
                     window.cancelAnimationFrame(self._intervalId);
                 self._intervalId = window.requestAnimFrame(callback);
@@ -664,6 +662,8 @@ g._setup = function()
     if (g._renderContext) {
         window.gl = g._renderContext;
         g._renderContext.viewport(0, 0, canvas.width, canvas.height);
+        g._renderContext.clearColor(0.0, 0.0, 0.0, 1.0);
+        g._renderContext.clear(g._renderContext.COLOR_BUFFER_BIT);
         //g._renderContext.fillRect(0,0,150,75);
          g._drawingUtil = new g.DrawingPrimitiveWebGL(g._renderContext);
         g._rendererInitialized = true;
@@ -691,6 +691,21 @@ var list = [
     "guang2d/core/GClass.js",
     "guang2d/core/GConfig.js",
     "guang2d/core/GMacro.js",
+    "guang2d/core/math/utility.js",
+    "guang2d/core/math/aabb.js",
+    "guang2d/core/math/mat3.js",
+    "guang2d/core/math/mat4.js",
+    "guang2d/core/math/mat4SIMD.js",
+    "guang2d/core/math/mat4stack.js",
+    "guang2d/core/math/plane.js",
+    "guang2d/core/math/quaternion.js",
+    "guang2d/core/math/ray2.js",
+    "guang2d/core/math/vec2.js",
+    "guang2d/core/math/vec3.js",
+    "guang2d/core/math/vec3SIMD.js",
+    "guang2d/core/math/vec4.js",
+    "guang2d/core/math/matrix.js",
+    "guang2d/core/math/SIMDPolyfill.js",
     "guang2d/core/shaders/GGLProgram.js",
     "guang2d/core/shaders/GGLStateCache.js",
     "guang2d/core/shaders/GShader.js",
