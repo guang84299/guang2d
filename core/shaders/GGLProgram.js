@@ -2,6 +2,12 @@
  * Created by yanchunguang on 15/9/23.
  */
 
+g.HashUniformEntry = function (value, location, hh) {
+    this.value = value;
+    this.location = location;
+    this.hh = hh || {};
+};
+
 g.GLProgram = g.Class.extend({
     _glContext: null,
     _programObj: null,
@@ -100,6 +106,283 @@ g.GLProgram = g.Class.extend({
         }
         return ( status === true );
     },
+
+    vertexShaderLog: function () {
+        return this._glContext.getShaderInfoLog(this._vertShader);
+    },
+
+    fragmentShaderLog: function () {
+        return this._glContext.getShaderInfoLog(this._fragShader);
+    },
+
+    /**
+     * It will add a new attribute to the shader
+     * @param {String} attributeName
+     * @param {Number} index
+     */
+    addAttribute: function (attributeName, index) {
+        this._glContext.bindAttribLocation(this._programObj, index, attributeName);
+    },
+
+    /**
+     * links the glProgram
+     * @return {Boolean}
+     */
+    link: function () {
+        if(!this._programObj) {
+            g.log("g.GLProgram.link(): Cannot link invalid program");
+            return false;
+        }
+
+        this._glContext.linkProgram(this._programObj);
+
+        if (this._vertShader)
+            this._glContext.deleteShader(this._vertShader);
+        if (this._fragShader)
+            this._glContext.deleteShader(this._fragShader);
+
+        this._vertShader = null;
+        this._fragShader = null;
+
+        if (g.CONFIG.debugMode) {
+            var status = this._glContext.getProgramParameter(this._programObj, this._glContext.LINK_STATUS);
+            if (!status) {
+                g.log("guang2d: ERROR: Failed to link program: " + this._glContext.getProgramInfoLog(this._programObj));
+                g.glDeleteProgram(this._programObj);
+                this._programObj = null;
+                return false;
+            }
+        }
+
+        return true;
+    },
+
+    /**
+     * it will call glUseProgram()
+     */
+    use: function () {
+        g.glUseProgram(this._programObj);
+    },
+
+    /**
+     * It will create 4 uniforms:
+     *  g.UNIFORM_PMATRIX
+     *  g.UNIFORM_MVMATRIX
+     *  g.UNIFORM_MVPMATRIX
+     *  g.UNIFORM_SAMPLER
+     */
+    updateUniforms: function () {
+        this._uniforms[g.UNIFORM_PMATRIX] = this._glContext.getUniformLocation(this._programObj, g.UNIFORM_PMATRIX_S);
+        this._uniforms[g.UNIFORM_MVMATRIX] = this._glContext.getUniformLocation(this._programObj, g.UNIFORM_MVMATRIX_S);
+        this._uniforms[g.UNIFORM_MVPMATRIX] = this._glContext.getUniformLocation(this._programObj, g.UNIFORM_MVPMATRIX_S);
+        this._uniforms[g.UNIFORM_TIME] = this._glContext.getUniformLocation(this._programObj, g.UNIFORM_TIME_S);
+        this._uniforms[g.UNIFORM_SINTIME] = this._glContext.getUniformLocation(this._programObj, g.UNIFORM_SINTIME_S);
+        this._uniforms[g.UNIFORM_COSTIME] = this._glContext.getUniformLocation(this._programObj, g.UNIFORM_COSTIME_S);
+
+        this._usesTime = (this._uniforms[g.UNIFORM_TIME] != null || this._uniforms[g.UNIFORM_SINTIME] != null || this._uniforms[g.UNIFORM_COSTIME] != null);
+
+        this._uniforms[g.UNIFORM_RANDOM01] = this._glContext.getUniformLocation(this._programObj, g.UNIFORM_RANDOM01_S);
+        this._uniforms[g.UNIFORM_SAMPLER] = this._glContext.getUniformLocation(this._programObj, g.UNIFORM_SAMPLER_S);
+
+        this.use();
+        // Since sample most probably won't change, set it to 0 now.
+        this.setUniformLocationWith1i(this._uniforms[g.UNIFORM_SAMPLER], 0);
+    },
+
+    // Uniform cache
+    _updateUniformLocation: function (location, data, bytes) {
+        if (location == null)
+            return false;
+
+        var updated = true;
+        var element = null;
+        for (var i = 0; i < this._hashForUniforms.length; i++)
+            if (this._hashForUniforms[i].location == location)
+                element = this._hashForUniforms[i];
+
+        if (!element) {
+            element = new g.HashUniformEntry();
+            // key
+            element.location = location;
+            // value
+            element.value = data;
+            this._hashForUniforms.push(element);
+        } else {
+            if (element.value == data)
+                updated = false;
+            else
+                element.value = data;
+        }
+
+        return updated;
+    },
+
+    getUniformLocationForName:function(name){
+        if(!name)
+            throw new Error("g.GLProgram.getUniformLocationForName(): uniform name should be non-null");
+        if(!this._programObj)
+            throw new Error("g.GLProgram.getUniformLocationForName(): Invalid operation. Cannot get uniform location when program is not initialized");
+
+        return this._glContext.getUniformLocation(this._programObj, name);
+    },
+
+    getUniformMVPMatrix: function () {
+        return this._uniforms[g.UNIFORM_MVPMATRIX];
+    },
+
+    getUniformSampler: function () {
+        return this._uniforms[g.UNIFORM_SAMPLER];
+    },
+
+    setUniformLocationWith1i: function (location, i1) {
+        var updated = this._updateUniformLocation(location, i1);
+        if (updated)
+            this._glContext.uniform1i(location, i1);
+    },
+
+    setUniformLocationWith2i:function(location, i1,i2){
+        var intArray= [i1,i2];
+        var updated =  this._updateUniformLocation(location, intArray);
+
+        if( updated )
+            this._glContext.uniform2i(location, i1, i2);
+    },
+
+    setUniformLocationWith3i:function(location, i1, i2, i3){
+        var intArray = [i1,i2,i3];
+        var updated =  this._updateUniformLocation(location, intArray);
+
+        if( updated )
+            this._glContext.uniform3i(location, i1, i2, i3);
+    },
+
+    setUniformLocationWith4i:function(location, i1, i2, i3, i4){
+        var intArray = [i1,i2,i3,i4];
+        var updated =  this._updateUniformLocation(location, intArray);
+
+        if( updated )
+            this._glContext.uniform4i(location, i1, i2, i3, i4);
+    },
+
+    setUniformLocationWith2iv:function(location, intArray, numberOfArrays){
+        var updated =  this._updateUniformLocation(location, intArray);
+
+        if( updated )
+            this._glContext.uniform2iv(location, intArray);
+    },
+
+    setUniformLocationWith3iv:function(location, intArray, numberOfArrays){
+        var updated =  this._updateUniformLocation(location, intArray);
+
+        if( updated )
+            this._glContext.uniform3iv(location, intArray);
+    },
+
+    setUniformLocationWith4iv:function(location, intArray, numberOfArrays){
+        var updated =  this._updateUniformLocation(location, intArray);
+
+        if( updated )
+            this._glContext.uniform4iv(location, intArray);
+    },
+
+    setUniformLocationI32: function (location, i1) {
+        this.setUniformLocationWith1i(arguments[0], arguments[1]);
+    },
+
+    setUniformLocationWith1f: function (location, f1) {
+        var updated = this._updateUniformLocation(location, f1);
+        if (updated)
+            this._glContext.uniform1f(location, f1);
+    },
+
+    setUniformLocationWith2f: function (location, f1, f2) {
+        var floats = [f1, f2];
+        var updated = this._updateUniformLocation(location, floats);
+        if (updated)
+            this._glContext.uniform2f(location, f1, f2);
+    },
+
+    setUniformLocationWith3f: function (location, f1, f2, f3) {
+        var floats = [f1, f2, f3];
+        var updated = this._updateUniformLocation(location, floats);
+        if (updated)
+            this._glContext.uniform3f(location, f1, f2, f3);
+    },
+
+    setUniformLocationWith4f: function (location, f1, f2, f3, f4) {
+        var floats = [f1, f2, f3, f4];
+        var updated = this._updateUniformLocation(location, floats);
+        if (updated)
+            this._glContext.uniform4f(location, f1, f2, f3, f4);
+    },
+
+    setUniformLocationWith2fv: function (location, floatArray, numberOfArrays) {
+        var updated = this._updateUniformLocation(location, floatArray);
+        if (updated)
+            this._glContext.uniform2fv(location, floatArray);
+    },
+
+    setUniformLocationWith3fv: function (location, floatArray, numberOfArrays) {
+        var updated = this._updateUniformLocation(location, floatArray);
+        if (updated)
+            this._glContext.uniform3fv(location, floatArray);
+    },
+
+    setUniformLocationWith4fv: function (location, floatArray, numberOfArrays) {
+        var updated = this._updateUniformLocation(location, floatArray);
+        if (updated)
+            this._glContext.uniform4fv(location, floatArray);
+    },
+
+    setUniformLocationWithMatrix4fv: function (location, matrixArray, numberOfMatrices) {
+        var updated = this._updateUniformLocation(location, matrixArray);
+        if (updated)
+            this._glContext.uniformMatrix4fv(location, false, matrixArray);
+    },
+
+    setUniformLocationF32: function () {
+        if (arguments.length < 2)
+            return;
+
+        switch (arguments.length) {
+            case 2:
+                this.setUniformLocationWith1f(arguments[0], arguments[1]);
+                break;
+            case 3:
+                this.setUniformLocationWith2f(arguments[0], arguments[1], arguments[2]);
+                break;
+            case 4:
+                this.setUniformLocationWith3f(arguments[0], arguments[1], arguments[2], arguments[3]);
+                break;
+            case 5:
+                this.setUniformLocationWith4f(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4]);
+                break;
+        }
+    },
+
+    reset: function () {
+        this._vertShader = null;
+        this._fragShader = null;
+        this._uniforms.length = 0;
+
+        // it is already deallocated by android
+        //ccGLDeleteProgram(m_uProgram);
+        this._glContext.deleteProgram(this._programObj);
+        this._programObj = null;
+
+        // Purge uniform hash
+        for (var i = 0; i < this._hashForUniforms.length; i++) {
+            this._hashForUniforms[i].value = null;
+            this._hashForUniforms[i] = null;
+        }
+
+        this._hashForUniforms.length = 0;
+    },
+
+    getProgram: function () {
+        return this._programObj;
+    },
+
 
 });
 

@@ -662,12 +662,13 @@ g._setup = function()
             'alpha': true
         });
     if (g._renderContext) {
+        window.gl = g._renderContext;
         g._renderContext.viewport(0, 0, canvas.width, canvas.height);
         //g._renderContext.fillRect(0,0,150,75);
          g._drawingUtil = new g.DrawingPrimitiveWebGL(g._renderContext);
         g._rendererInitialized = true;
        // g.textureCache._initializingRenderer();
-       // g.shaderCache._init();
+        g.shaderCache._init();
     } else {
        // g._renderContext = new g.CanvasContextWrapper(localCanvas.getContext("2d"));
        // g._drawingUtil = g.DrawingPrimitiveCanvas ? new g.DrawingPrimitiveCanvas(g._renderContext) : null;
@@ -688,8 +689,10 @@ var list = [
     "guang2d/GDebugger.js",
     "guang2d/core/DrawingPrimitiveWebGL.js",
     "guang2d/core/GClass.js",
+    "guang2d/core/GConfig.js",
     "guang2d/core/GMacro.js",
     "guang2d/core/shaders/GGLProgram.js",
+    "guang2d/core/shaders/GGLStateCache.js",
     "guang2d/core/shaders/GShader.js",
     "guang2d/core/shaders/GShaderCache.js",
     "guang2d/core/utils/sprintf.js",
